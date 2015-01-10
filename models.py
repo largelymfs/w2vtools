@@ -12,7 +12,7 @@ class W2VModel:
         self.load(filename)
 
     def load(self, filename):
-        print "Loading Model : ", filename,'...',
+        print "Loading Word2vec Model : ", filename,'...',
         with open(filename) as f:
             tmp = f.readline().strip().split()
             self.n_word = int(tmp[0])
@@ -40,7 +40,34 @@ class W2VModel:
         result = [(self.similarity(word, word1), word1) for word1 in self.content.keys() if word1!=word]
         result = sorted(result, cmp=lambda x, y:-cmp(x[0],y[0]))[:n]
         return result
-if __name__=="__main__":
-    w = W2VModel("./model")
-    print w.similarity("football",'baseball')
 
+class MSW2VModel(W2VModel):
+
+    def __init__(self, filename):
+        W2VModel.__init__(self, filename)
+
+    def load(self, filename):
+        print "Loading MultiSense Word2vec Model : ", filename,'...',
+        with open(filename) as f:
+            tmp = f.readline().strip().split()
+            self.n_word = int(tmp[0])
+            self.d_word = int(tmp[1])
+            self.content = {}
+            while True:
+                l = f.readline()
+                if not l:
+                    break
+                words = l.strip().split()
+                word = words[0]
+                self.content[word] = {}
+                self.content[word]['sense_number'] = int(words[1])
+                self.content[word]['prob'] = [int(item) for item in words[2:]]
+                total = sum(self.content[word]['prob'])
+                self.content[word]['prob'] = [ float(item)/float(total) for item in self.content[word]['prob']]
+                self.content[word]['global_embedding'] = np.array([float(item) for item in f.readline().strip().split()])
+                self.content[word]['sense_embeddings'] = [ np.array([float(item) for item in f.readline().strip().split()]) for i in range(self.content[word]['sense_number'])]
+        print "Completed!"
+
+
+if __name__=="__main__":
+    m = MSW2VModel('./../MultiSense/multi-sense-skipgram/vectors1986-MSSG')
