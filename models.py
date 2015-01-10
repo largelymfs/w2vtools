@@ -68,6 +68,19 @@ class MSW2VModel(W2VModel):
                 self.content[word]['sense_embeddings'] = [ np.array([float(item) for item in f.readline().strip().split()]) for i in range(self.content[word]['sense_number'])]
         print "Completed!"
 
+class TS_MSW2VModel():
+
+    def __init__(self, conf):
+        self.load(conf)
+
+    def load(self, conf):
+        self.content = {}
+        with open(conf) as fin:
+            for l in fin:
+                year, filename = l.strip().split()
+                year = int(year)
+                self.content[year] = MSW2VModel(filename)
+
 
 if __name__=="__main__":
-    m = MSW2VModel('./../MultiSense/multi-sense-skipgram/vectors1986-MSSG')
+    m = TS_MSW2VModel('./Timeseries.conf')
