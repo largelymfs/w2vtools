@@ -135,6 +135,59 @@ class TS_MSW2VModel():
                 year = int(year)
                 self.content[year] = MSW2VModel(filename)
 
+class TopicModel():
+
+    def __init__(self, wordmap_fn, tassign_fn):
+        self.load_vocab(wordmap_fn)
+        self.load_assign(tassign_fn)
+
+    def load_vocab(self, fn):
+        self.id2word = {}
+        self.word2id = {}
+        with open(fn) as fin:
+            fin.readline()
+            for l in fin:
+                word, number = l.strip().split()
+                number = int(number)
+                self.word2id[word] = number
+                self.id2word[number] = word
+
+    def load_assign(self, fn):
+        self.model ={}
+        with open(fn) as fin:
+            for l in fin:
+                words = l.strip().split()
+                for word in words:
+                    word_number , topic_number = word.split(':')
+                    word_number = int(word_number)
+                    topic_number = int(topic_number)
+                    if word_number not in self.id2word:
+                        continue
+                    word = self.id2word[word_number]
+                    if topic_number not in self.model:
+                        self.model[topic_number] = {}
+                    if word not in self.model[topic_number]:
+                        self.model[topic_number][word] = 0
+                    self.model[topic_number][word] +=1
+
+    def find_nearest_word(self, topic_number):
+        res = self.model[topic_number]
+        res = sorted(res.items(), cmp=lambda x, y:-cmp(x[1],y[1]))
+        return res
+
+    def find_nearest_topic(self, word):
+        res = [(topic_number,self.model[topic_number][word]) for topic_number in self.model if word in self.model[topic_number]]
+        res = sorted(res, cmp=lambda x, y : -cmp(x[1],y[1]))
+        return res
 
 if __name__=="__main__":
-    m = TS_MSW2VModel('./Timeseries.conf')
+    m = TopicModel("./../ldamodel/wordmap.txt","./../ldamodel/model-final.tassign")
+    while True:
+        word = raw_input("Please input the word : ")
+        if word=='EXIT':
+            break
+        print "====================================="
+        res = m.find_nearest_topic(word)
+        for topic_number, cnt in res:
+            print topic_number , cnt
+        print "======================================"
