@@ -180,14 +180,112 @@ class TopicModel():
         res = sorted(res, cmp=lambda x, y : -cmp(x[1],y[1]))
         return res
 
+class TWEModel():
+
+    def __init__(self):
+        pass
+
+    def find_nearest_word(self, word1, topic1):
+        embedding1 = self.generate_embeeding(word1, topic1)
+        res = []
+        for topic2 in range(self.topic_number):
+            for word2 in self.vocab:
+                embedding2 = self.generate_embeeding(word2, topic2)
+                similarity = self.generate_similarity(embedding1, embedding2)
+                if similarity >0.4:
+                    res.append((word2, topic2, similarity))
+
+        res = sorted(res, cmp=lambda x, y:-cmp(x[2],y[2]))
+        return res
+
+    def generate_similarity(self, embedding1, embedding2):
+        norm1 = LA.norm(embedding1)
+        norm2 = LA.norm(embedding2)
+        return (np.dot(embedding1, embedding2)/(norm1*norm2))
+
+class MVTWEModel(TWEModel):
+
+    def __init__(self, wordfilename, topicfilename):
+        TWEModel.__init__(self)
+        self.load_word(wordfilename)
+        self.load_topic(topicfilename)
+
+    def load_word(self, wordfilename):
+        self.vocab = {}
+        with open(wordfilename) as f:
+            for l in f:
+                words = l.strip().split()
+                word = words[0]
+                if word in self.vocab:
+                    continue
+                else:
+                    self.vocab[word] = np.array([float(item) for item in words[1:]])
+
+    def load_topic(self, topicfilename):
+        self.topic_number = 0
+        self.topic = {}
+        with open(topicfilename) as f:
+            while True:
+                l = f.readline()
+                if not l:
+                    break
+                l = l.strip().split()
+                self.topic[self.topic_number] = {}
+                self.topic[self.topic_number]['U'] = np.array([float(item) for item in l])
+                self.topic[self.topic_number]['V'] = np.array([float(item) for item in f.readline().strip().split()])
+                self.topic[self.topic_number]['a'] = np.array([float(item) for item in f.readline().strip().split()])
+                self.rank = len(self.topic[self.topic_number]['U']) / len(self.topic[self.topic_number]['a'])
+                self.topic_number +=1
+
+    def generate_embeeding(self, word, topic):
+        if word not in self.vocab:
+            return None
+        if topic not in self.topic:
+            return None
+        U = self.topic[topic]['U']
+        V = self.topic[topic]['V']
+        a = self.topic[topic]['a']
+        embedding = self.vocab[word]
+        tmp = np.dot(U, V) +  np.diag(a)
+        return np.dot(tmp, embedding)
+
+    def generate_global_embedding(self, word):
+        if word not in self.vocab:
+            return None
+        return self.vocab[word]
+
+    def find_N_nearest_global_word(self, word, topic):
+        embedding1 = self.generate_embeeding(word, topic)
+        res = []
+        for word2 in self.vocab:
+            embedding2 = self.generate_global_embedding(word2)
+            similarity = self.generate_similarity(embedding1, embedding2)
+            if similarity>0.4:
+                res.append((word2, similarity))
+
+        return sorted(res, cmp=lambda x, y:-cmp(x[1],y[1]))
 if __name__=="__main__":
     m = TopicModel("./../ldamodel/wordmap.txt","./../ldamodel/model-final.tassign")
     while True:
-        word = raw_input("Please input the word : ")
-        if word=='EXIT':
+        topic = raw_input("Please input the word : ")
+        if topic=='EXIT':
             break
+        topic = int(topic)
         print "====================================="
-        res = m.find_nearest_topic(word)
-        for topic_number, cnt in res:
-            print topic_number , cnt
+        res = m.find_nearest_word(topic)
+        for word, cnt in res[:20]:
+            print word , cnt
         print "======================================"
+    #m = MVTWEModel("./../word.vector","./../topic.vector")
+    #while True:
+    #    words    = raw_input("Please input the word and the topic : ")
+    #    word, topic = words.split(' ')
+    #    if word=='EXIT':
+    #        break
+    #    topic = int(topic)
+    #    res = m.find_nearest_word(word, topic)
+    #    print "===================================="
+    #    for word,topic, similarity in res[:20]:
+    #        print word,topic, similarity
+    #    print "===================================="
+
