@@ -78,7 +78,7 @@ class TopicalLSAModel():
                         self.data[(word, topic_id)][word0] +=1
     def get_frequent_wtpair(self, word, topic):
         res = self.data[(word, topic)].items()
-        return sorted(res, cmp=lambda x, y : -cmp(x[1],y[1]))
+        return (sorted(res, cmp=lambda x, y : -cmp(x[1],y[1])), self.data[(word, topic)][word])
 
     def get_frequent(self, word):
         keys = [key for key in self.data if key[0]==word]
@@ -87,16 +87,18 @@ class TopicalLSAModel():
 if __name__=="__main__":
     stoplist = load_stoplist("./stoplist.txt")
 
-    m = TopicalLSAModel("./../Dataset/wordmap.txt","./../Dataset/model-final.tassign", 5)
+    m = TopicalLSAModel("./../Dataset/wordmap.txt","./../Dataset/model-final.tassign", 10)
+    #m = TopicalLSAModel("./../Dataset/wordmap.txt","./test.model", 5)
     while True:
         word = raw_input("Please Input A Word : ")
         if word=='EXIT':
             break
         result = m.get_frequent(word)
-        for ((word, topic), res) in result:
+        result = sorted(result, cmp=lambda x,y:-cmp(x[1],y[1]))[:5]
+        for ((wordtem, topictem), (res,_))  in result:
             res = [(word, cnt) for word, cnt in res if word not in stoplist]
             res = res[:10]
-            print word, topic, " : "
+            print wordtem, topictem, " : ",
             for item in res:
                 print  item[0], item[1],
             print
