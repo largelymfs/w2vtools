@@ -13,9 +13,9 @@ class W2VModel:
     def load(self, filename):
         print "Loading Word2vec Model : ", filename,'...',
         with open(filename) as f:
-            tmp = f.readline().strip().split()
-            self.n_word = int(tmp[0])
-            self.d_word = int(tmp[1])
+            #tmp = f.readline().strip().split()
+            #self.n_word = int(tmp[0])
+            #self.d_word = int(tmp[1])
             self.content = {}
             for l in f:
                 words = l.strip().split()
@@ -32,6 +32,7 @@ class W2VModel:
         v1 = self.content[worda]
         v2 = self.content[wordb]
         return np.dot(v1, v2)/(LA.norm(v1)*LA.norm(v2))
+        #return np.dot(v1, v2)
 
     def find_N_nearest(self, word, n):
         if word not in self.content:
@@ -192,7 +193,7 @@ class TWEModel():
             for word2 in self.vocab:
                 embedding2 = self.generate_embeeding(word2, topic2)
                 similarity = self.generate_similarity(embedding1, embedding2)
-                if similarity >0.4:
+                if similarity >0.5:
                     res.append((word2, topic2, similarity))
 
         res = sorted(res, cmp=lambda x, y:-cmp(x[2],y[2]))
@@ -205,10 +206,11 @@ class TWEModel():
 
 class MVTWEModel(TWEModel):
 
-    def __init__(self, wordfilename, topicfilename):
+    def __init__(self, wordfilename, topicfilename, wordmapfile, tassignfilename):
         TWEModel.__init__(self)
         self.load_word(wordfilename)
         self.load_topic(topicfilename)
+        self.topicmodel = TopicModel(wordmapfile, tassignfilename)
 
     def load_word(self, wordfilename):
         self.vocab = {}
@@ -256,14 +258,21 @@ class MVTWEModel(TWEModel):
 
     def find_N_nearest_global_word(self, word, topic):
         embedding1 = self.generate_embeeding(word, topic)
+        print embedding1[:10]
         res = []
         for word2 in self.vocab:
-            embedding2 = self.generate_global_embedding(word2)
-            similarity = self.generate_similarity(embedding1, embedding2)
-            if similarity>0.4:
-                res.append((word2, similarity))
+            for topic2 in range(self.topic_number):
+                if word2 not in self.topicmodel.model[topic2]:
+                    continue
+                cnt = self.topicmodel.model[topic2][word2]
+                if cnt <10:
+                    continue
+                embedding2 = self.generate_embeeding(word2, topic2)
+                similarity = self.generate_similarity(embedding1, embedding2)
+                if similarity>0.4:
+                    res.append((word2, topic2, similarity))
 
-        return sorted(res, cmp=lambda x, y:-cmp(x[1],y[1]))
+        return sorted(res, cmp=lambda x, y:-cmp(x[2],y[2]))
 if __name__=="__main__":
     m = TopicModel("./../ldamodel/wordmap.txt","./../ldamodel/model-final.tassign")
     while True:
