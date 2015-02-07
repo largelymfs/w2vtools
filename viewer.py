@@ -23,8 +23,10 @@ def show_topicmodel_topic():
         print "==================================="
 
 def show_topicmodel_word():
-    modelfile = "./../Dataset/model-final.tassign"
-    wordmapfile = "./../Dataset/wordmap.txt"
+    #modelfile = "./../Dataset/model-final.tassign"
+    #wordmapfile = "./../Dataset/wordmap.txt"
+    wordmapfile = "./../multi_fastLDA/src/wordmap.txt"
+    modelfile = "./../multi_fastLDA/src/model-final.tassign"
     m = models.TopicModel(wordmapfile, modelfile)
     while True:
         word = raw_input("Please Input the word : ")
@@ -39,8 +41,10 @@ def show_topicmodel_word():
 def show_twe():
     wordfile = "./../new_gensim/word.vector.wik"
     topicfile = "./../new_gensim/topic.vector.wik"
-    wordmapfile = "./../Dataset/wordmap.txt"
-    tassignfilename = "./../Dataset/model-final.tassign"
+    #wordmapfile = "./../Dataset/wordmap.txt"
+    #tassignfilename = "./../Dataset/model-final.tassign"
+    wordmapfile = "./../multi_fastLDA/src/wordmap.txt"
+    tassignfilename = "./../multi_fastLDA/src/model-final.tassign"
     m = models.MVTWEModel(wordfile, topicfile, wordmapfile, tassignfilename)
     while True:
         ress = raw_input("Please enter the word and topic :  ")

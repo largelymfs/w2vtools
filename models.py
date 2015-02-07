@@ -1,9 +1,20 @@
 
 import numpy as np
 import numpy.linalg as LA
-
+from numpy import zeros
 def list2npvector(vect):
     return np.array([float(item) for item in vect])
+
+def string2matrix(vect, m, n):
+    res = zeros((m, n))
+    cnt = 0
+    for (i, j) in np.ndindex(m, n):
+        res[i][j] = float(vect[cnt])
+        cnt+=1
+    return res
+
+def string2list(vect, n):
+    return list2npvector(vect)
 
 class W2VModel:
 
@@ -233,9 +244,11 @@ class MVTWEModel(TWEModel):
                     break
                 l = l.strip().split()
                 self.topic[self.topic_number] = {}
-                self.topic[self.topic_number]['U'] = np.array([float(item) for item in l])
-                self.topic[self.topic_number]['V'] = np.array([float(item) for item in f.readline().strip().split()])
-                self.topic[self.topic_number]['a'] = np.array([float(item) for item in f.readline().strip().split()])
+                self.topic[self.topic_number]['U'] = string2matrix(l, 100, 3)
+                l = f.readline().strip().split()
+                self.topic[self.topic_number]['V'] = string2matrix(l, 3, 100)
+                l = f.readline().strip().split()
+                self.topic[self.topic_number]['a'] = string2list(l, 100)
                 self.rank = len(self.topic[self.topic_number]['U']) / len(self.topic[self.topic_number]['a'])
                 self.topic_number +=1
 
@@ -248,8 +261,12 @@ class MVTWEModel(TWEModel):
         V = self.topic[topic]['V']
         a = self.topic[topic]['a']
         embedding = self.vocab[word]
-        tmp = np.dot(U, V) +  np.diag(a)
-        return np.dot(tmp, embedding)
+        #tmp = np.dot(U, V) +  np.diag(a)
+        #return np.dot(tmp, embedding)
+        tmp = np.dot(V, embedding)
+        tmp = np.dot(U, tmp)
+        tmp = tmp + np.dot(np.diag(a), embedding)
+        return tmp
 
     def generate_global_embedding(self, word):
         if word not in self.vocab:
@@ -258,14 +275,13 @@ class MVTWEModel(TWEModel):
 
     def find_N_nearest_global_word(self, word, topic):
         embedding1 = self.generate_embeeding(word, topic)
-        print embedding1[:10]
         res = []
         for word2 in self.vocab:
             for topic2 in range(self.topic_number):
                 if word2 not in self.topicmodel.model[topic2]:
                     continue
                 cnt = self.topicmodel.model[topic2][word2]
-                if cnt <10:
+                if cnt < 10:
                     continue
                 embedding2 = self.generate_embeeding(word2, topic2)
                 similarity = self.generate_similarity(embedding1, embedding2)
@@ -273,6 +289,7 @@ class MVTWEModel(TWEModel):
                     res.append((word2, topic2, similarity))
 
         return sorted(res, cmp=lambda x, y:-cmp(x[2],y[2]))
+
 if __name__=="__main__":
     m = TopicModel("./../ldamodel/wordmap.txt","./../ldamodel/model-final.tassign")
     while True:

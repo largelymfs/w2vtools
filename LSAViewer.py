@@ -87,8 +87,9 @@ class TopicalLSAModel():
 if __name__=="__main__":
     stoplist = load_stoplist("./stoplist.txt")
 
-    m = TopicalLSAModel("./../Dataset/wordmap.txt","./../Dataset/model-final.tassign", 10)
+    #m = TopicalLSAModel("./../Dataset/wordmap.txt","./../Dataset/model-final.tassign", 10)
     #m = TopicalLSAModel("./../Dataset/wordmap.txt","./test.model", 5)
+    m = TopicalLSAModel("./../multi_fastLDA/src/wordmap.txt","./../multi_fastLDA/src/model-final.tassign", 10)
     while True:
         word = raw_input("Please Input A Word : ")
         if word=='EXIT':
